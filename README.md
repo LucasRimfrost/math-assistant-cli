@@ -1,57 +1,72 @@
-# Math Assistant
+# Math Assistant CLI
 
-A Python package that uses the Claude AI to help with mathematics problems. It can analyze problems from images, provide explanations, generate similar practice problems, and check solutions.
-
-## Features
-
-- Parse mathematical problems from images
-- Get detailed explanations and solutions
-- Generate similar practice problems
-- Check and provide feedback on solutions
-- Handle complex mathematical notation and diagrams
+A command-line tool that uses Claude AI to help with math problems. Just show it a picture of your math problem and get explanations, similar practice problems, and solution checking.
 
 ## Installation
 
 ```bash
-pip install math-assistant
+pip install math-assistant-cli
 ```
 
-## Quick Start
-
-```python
-from math_assistant import MathAssistant
-
-# Initialize the assistant
-assistant = MathAssistant()
-
-# Get help with a problem
-explanation = assistant.explain_problem(
-    "problem.jpg",
-    "Can you explain the approach to this integral?"
-)
-
-# Generate practice problems
-similar = assistant.generate_similar_problems("problem.jpg")
-
-# Check your solution
-feedback = assistant.check_solution(
-    "problem.jpg",
-    "Here's my solution: ..."
-)
-```
-
-## Configuration
-
-Set your Anthropic API key as an environment variable:
+You'll need an Anthropic API key. Set it as an environment variable:
 ```bash
 export ANTHROPIC_API_KEY='your-api-key-here'
 ```
 
-Or provide it when initializing:
-```python
-assistant = MathAssistant(api_key='your-api-key-here')
+## Quick Start
+
+1. Explain a problem:
+```bash
+math-assist explain problem.jpg
 ```
 
-## Documentation
+2. Interactive mode:
+```bash
+math-assist
+```
 
-For full documentation, visit [docs/README.md](docs/README.md)
+3. Different formatting:
+```bash
+math-assist explain problem.jpg --format rich
+```
+
+## Features
+
+- 📸 Upload images of math problems
+- 💬 Get step-by-step explanations
+- 🏋️ Generate similar practice problems
+- ✅ Check your solutions
+- 💾 Save conversations for later
+- 🎨 Multiple output formats
+
+## Interactive Commands
+
+When in interactive mode:
+- `image: path/to/image.jpg` - Load a new problem
+- `save` - Save the conversation
+- `quit` - Exit
+
+## Examples
+
+1. Quick explanation:
+```bash
+math-assist explain calc_problem.jpg
+```
+
+2. Interactive session:
+```bash
+math-assist
+> image: integral.jpg
+> Can you explain the first step?
+> How do I know which substitution to use?
+> save conversation.txt
+> quit
+```
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
