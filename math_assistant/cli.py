@@ -122,7 +122,7 @@ def handle_image_command(assistant: MathAssistant, image_path: str) -> bool:
         if not path.exists():
             raise ImageProcessingError(f"Image not found: {path}")
 
-        if not path.suffix.lower() in [".jpg", ".jpeg", ".png"]:
+        if path.suffix.lower() not in [".jpg", ".jpeg", ".png"]:
             raise ImageProcessingError("Unsupported format. Use JPG or PNG.")
 
         with Progress(
@@ -287,7 +287,3 @@ def explain(image: str, format: str) -> None:
     except Exception as e:
         handle_error(e)
         sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()

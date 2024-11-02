@@ -13,7 +13,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "math-assist=math_assistant.cli:main",
+            "math-assist=math_assistant.__main__:run_cli",
         ],
     },
     python_requires=">=3.8",

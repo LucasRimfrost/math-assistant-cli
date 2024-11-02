@@ -8,13 +8,12 @@ from rich.theme import Theme
 import re
 from datetime import datetime
 
-ResponseType = Union[str, Dict[str, Any], List[Any]]  # Type alias for responses
+ResponseType = Union[str, Dict[str, Any], List[Any]]
 
 
 class ResponseFormatter:
     """Handles formatting of responses from the Math Assistant."""
 
-    # Class variables with explicit types
     BOLD: ClassVar[str] = "\033[1m"
     RESET: ClassVar[str] = "\033[0m"
 
@@ -34,45 +33,72 @@ class ResponseFormatter:
     @staticmethod
     def clean_text(response: ResponseType) -> str:
         """Extract and clean text from response."""
-        if isinstance(response, str) and "TextBlock" in response:
-            match: Optional[re.Match] = re.search(r'text="(.*?)"', response, re.DOTALL)
-            text: str = match.group(1) if match else response
+        if isinstance(response, str):
+            # Extract text from TextBlock if present
+            if "TextBlock" in response:
+                match = re.search(r'text="([^"]*)"', response, re.DOTALL)
+                if match:
+                    text = match.group(1)
+                else:
+                    text = response
+            else:
+                text = response
         else:
             text = str(response)
 
         # Clean up the text
         text = text.replace("\\n", "\n")
         text = re.sub(r"\n\s+", "\n", text)  # Remove excess whitespace
+
+        # Remove TextBlock wrapper if present
+        text = re.sub(r'\[TextBlock\(text="|", type=\'text\'\)\]', "", text)
+
         return text.strip()
 
-    @classmethod
-    def pretty_print(cls, response: ResponseType, show_sections: bool = True) -> None:
-        """Format and print response with sections and formatting."""
-        text: str = cls.clean_text(response)
-        sections: List[str] = text.split("\n\n")
+    @staticmethod
+    def format_steps(text: str) -> str:
+        """Format step-by-step solutions with proper spacing."""
+        lines = text.split("\n")
+        formatted_lines = []
+        in_step_by_step = False
 
-        for section in sections:
-            if not section.strip():
+        for line in lines:
+            line = line.strip()
+
+            # Check if we're entering step-by-step section
+            if "Step-by-step solution:" in line:
+                in_step_by_step = True
+                formatted_lines.append("\n" + line + "\n")
                 continue
 
-            # Handle headers (ends with colon)
-            if section.strip().endswith(":"):
-                if show_sections:
-                    print("\n" + "-" * 50)
-                print(cls.BOLD + section.strip() + cls.RESET)
+            # Format lettered steps in step-by-step section
+            if in_step_by_step and re.match(r"^[a-z]\)", line):
+                formatted_lines.append("\n" + line)
+                continue
 
-            # Handle numbered lists/steps
-            elif section.strip() and section.strip()[0].isdigit() and ". " in section:
-                header: str = section.split("\n")[0]
-                rest: List[str] = section.split("\n")[1:]
-                print("\n" + cls.BOLD + header + cls.RESET)
-                for line in rest:
-                    if line.strip():
-                        print(line)
+            # Handle numbered sections (1, 2, 3, 4)
+            if re.match(r"^\d+\s+[A-Z]", line):
+                formatted_lines.append("\n" + line)
+                continue
 
-            # Regular text
-            else:
-                print(section)
+            # Handle bullet points
+            if line.startswith("•"):
+                formatted_lines.append("  " + line)
+                continue
+
+            # Handle regular text
+            if line:
+                formatted_lines.append(line)
+
+        text = "\n".join(formatted_lines)
+
+        # Fix spacing around major sections
+        text = re.sub(r"(\d+\s+[A-Z][^:]+:)", r"\n\1\n", text)
+
+        # Add space between bullet points and next section
+        text = re.sub(r"(•[^\n]+)\n(\d+\s+[A-Z])", r"\1\n\n\2", text)
+
+        return text.strip()
 
     @classmethod
     def rich_print(
@@ -83,14 +109,21 @@ class ResponseFormatter:
     ) -> None:
         """Print response using rich formatting with colors and boxes."""
         console: Console = Console()
-        text: str = cls.clean_text(response)
 
-        # Convert text to markdown
+        # Clean and format the text
+        text = cls.clean_text(response)
+        text = cls.format_steps(text)
+
+        # Convert to markdown
         md: Markdown = Markdown(text)
 
         # Create panel with proper styling
         panel: Panel = Panel(
-            md, title=title, border_style=style, padding=(1, 2), title_align="left"
+            md,
+            title=title,
+            border_style=style,
+            padding=(1, 2),
+            title_align="left",
         )
 
         # Print with proper spacing
@@ -99,11 +132,28 @@ class ResponseFormatter:
         console.print()
 
     @classmethod
+    def pretty_print(cls, response: ResponseType, show_sections: bool = True) -> None:
+        """Format and print response with sections and formatting."""
+        text: str = cls.clean_text(response)
+
+        # Format steps if present
+        if "Step " in text or "• " in text:
+            formatted_text = cls.format_steps(text)
+        else:
+            formatted_text = text
+
+        print(formatted_text)
+
+    @classmethod
     def to_markdown(
         cls, response: ResponseType, include_frontmatter: bool = False
     ) -> str:
         """Convert response to markdown format for saving or further processing."""
         text: str = cls.clean_text(response)
+
+        # Format steps if present
+        if "Step " in text or "• " in text:
+            text = cls.format_steps(text)
 
         # Add frontmatter if requested
         if include_frontmatter:
@@ -114,14 +164,6 @@ date: {datetime.now().strftime('%Y-%m-%d')}
 
 """
             text = frontmatter + text
-
-        # Convert common patterns to markdown
-        text = re.sub(
-            r"^(\d+)\.\s", r"\n\1. ", text, flags=re.MULTILINE
-        )  # Numbered lists
-        text = re.sub(
-            r"^([A-Za-z ]+):$", r"\n## \1", text, flags=re.MULTILINE
-        )  # Headers
 
         return text.strip() + "\n"
 
