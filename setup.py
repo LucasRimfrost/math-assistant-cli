@@ -1,6 +1,10 @@
 from setuptools import setup, find_packages
 from math_assistant.version import __version__
 
+# Read README.md safely
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setup(
     name="math-assistant-cli",
     version=__version__,
@@ -20,7 +24,7 @@ setup(
     author="Lucas Rimfrost",
     author_email="lucas.rimfrost@gmail.com",
     description="AI-powered math problem solver and tutor",
-    long_description=open("README.md").read(),
+    long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/LucasRimfrost/math-assistant-cli",
     license="MIT",
@@ -31,6 +35,8 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Topic :: Education",
+        "Topic :: Scientific/Engineering :: Mathematics",
     ],
     keywords="mathematics education ai tutor claude anthropic",
 )
